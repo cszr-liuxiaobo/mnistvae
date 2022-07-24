@@ -20,6 +20,15 @@ import numpy as np
 #                                           batch_size=batch_size,
 #                                           shuffle=True)
 # 读取数据,数据为自我设定非常灵活变更数据库就可以进行更多测试
+
+# 超参数设置
+image_size = 784  # 图片大小
+h_dim = 400
+z_dim = 20
+num_epochs = 3000  # 15个循环
+batch_size = 80  # 一批的数量
+learning_rate = 1e-4  # 学习率
+
 # 数据加载
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -40,19 +49,13 @@ sample_dir = 'samples'
 if not os.path.exists(sample_dir):
     os.makedirs(sample_dir)
 
-# 超参数设置
-image_size = 784  # 图片大小
-h_dim = 400
-z_dim = 2
-num_epochs = 3000  # 15个循环
-batch_size = 1  # 一批的数量
-learning_rate = 1e-4  # 学习率
 
 # 构造VAE实例对象
 model = VAE().to(device)
 
 # 选择优化器，并传入VAE模型参数和学习率
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
 def train():
     if not os.path.exists("./models/"):
         os.mkdir("./models/")
@@ -104,25 +107,24 @@ def train():
                 print("Epoch[{}/{}], Step [{}/{}], Reconst Loss: {:.4f}, KL Div: {:.4f}"
                       .format(epoch + 1, num_epochs, i + 1, len(train_loader), reconst_loss.item(), kl_div.item()))
 
-        with torch.no_grad():
-            # 保存采样值
-            # 生成随机数 z
-            z = torch.randn(batch_size, z_dim).to(device)  # z的大小为batch_size * z_dim = 128*20
-            # 对随机数 z 进行解码decode输出
-            out = model.decode(z).view(-1, 1, 28, 28)
-            # 保存结果值
-            save_image(out, os.path.join(sample_dir, 'sampled-{}.png'.format(epoch + 1)))
+        # with torch.no_grad():
+        #     # 保存采样值
+        #     # 生成随机数 z
+        #     z = torch.randn(batch_size, z_dim).to(device)  # z的大小为batch_size * z_dim = 128*20
+        #     # 对随机数 z 进行解码decode输出
+        #     out = model.decode(z).view(-1, 1, 28, 28)
+        #     # 保存结果值
+        #     save_image(out, os.path.join(sample_dir, 'sampled-{}.png'.format(epoch + 1)))
+        #
+        #     # 保存重构值
+        #     # 将batch_size*748的x输入模型进行前向传播计算，获取重构值out
+        #     out, _, _,_ = model(x)
+        #     # 将输入与输出拼接在一起输出保存  batch_size*1*28*（28+28）=batch_size*1*28*56
+        #     x_concat = torch.cat([x.view(-1, 1, 28, 28), out.view(-1, 1, 28, 28)], dim=3)
+        #     save_image(x_concat, os.path.join(sample_dir, 'reconst-{}.png'.format(epoch + 1)))
 
-            # 保存重构值
-            # 将batch_size*748的x输入模型进行前向传播计算，获取重构值out
-            out, _, _,_ = model(x)
-            # 将输入与输出拼接在一起输出保存  batch_size*1*28*（28+28）=batch_size*1*28*56
-            x_concat = torch.cat([x.view(-1, 1, 28, 28), out.view(-1, 1, 28, 28)], dim=3)
-            save_image(x_concat, os.path.join(sample_dir, 'reconst-{}.png'.format(epoch + 1)))
-    # plotdistribution(y_np, z_np)
         if epoch%100 ==0:
             torch.save(model.state_dict(), "./my_model_epoch{}.pth".format(epoch))  # 只保存模型的参数
-
     torch.save(model.state_dict(), "./my_model.pth")  # 只保存模型的参数
 
 def evaluation():
@@ -217,8 +219,7 @@ def plotdistribution(y_np,z_np=None):
     plt.show()
 
 if __name__ == '__main__':
-
-    # train()
-    evaluation()
+    train()
+    # evaluation()
     # 隐空间可视化要求输入为数字输出为数字的隐空间输出。但是输出是20维，所以怎么图像展示？
     # 1）变更输出为1维

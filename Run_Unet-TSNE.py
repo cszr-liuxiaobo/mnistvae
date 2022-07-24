@@ -10,7 +10,10 @@ from model import VAE
 import matplotlib.pyplot as plt
 import numpy as np
 from cv2 import cv2
-# 实现功能：输入图像在图像中找到对应的latent space点，然后呈现在plt中。
+from sklearn.manifold import TSNE
+
+
+
 # 超参数设置
 image_size = 784  # 图片大小
 h_dim = 400
@@ -22,14 +25,15 @@ learning_rate = 1e-4  # 学习率
 # 数据加载
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Grayscale(num_output_channels=1)
+    transforms.Grayscale(num_output_channels=1),
+    transforms.Resize([28,28])
 ])
 root = 'data'
 train_dataset = datasets.ImageFolder(root + '/train',transform)
 test_dataset = datasets.ImageFolder(root + '/test',transform)
 # 导入数据,分批打乱有利于增加训练复杂度
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=80, shuffle=True,drop_last=True,num_workers=8, pin_memory=True)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=80, shuffle=False,drop_last=True,num_workers=8, pin_memory=True)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=80, shuffle=True,drop_last=True,num_workers=8, pin_memory=True)
 
 # 配置GPU或CPU设置
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -117,6 +121,7 @@ def train():
             torch.save(model.state_dict(), "./my_model_epoch{}.pth".format(epoch))  # 只保存模型的参数
     torch.save(model.state_dict(), "./my_model.pth")  # 只保存模型的参数
 
+
 fig, ax = plt.subplots(1, 3)
 
 def evaluation():
@@ -134,7 +139,7 @@ def evaluation():
         y_cpu = y.cpu().detach().numpy()
         z_cpu = z.cpu().detach().numpy()
         y_np.extend(y_cpu)
-        z_np.extend(z_cpu)   #20*batch个大小。
+        z_np.extend(z_cpu)   #batch*20个大小。
 
         # 计算重构损失和KL散度
         # 重构损失
@@ -162,6 +167,9 @@ def plotdistribution2(Label,Mat):
     :param Mat: 二维点坐标矩阵
     :return:
     """
+    tsne = TSNE(n_components=2, random_state=0)
+    Mat = tsne.fit_transform(Mat[:])
+
     x = Mat[:, 0]
     y = Mat[:, 1]
     # map_size = {0: 5, 1: 5}
@@ -211,22 +219,11 @@ def run():
 
 if __name__ == '__main__':
     # train()
-
-    evaluation()
-    # cid=fig.canvas.mpl_connect('button_press_event', onclick)
-    # print("cid::",cid)
-    # plt.show()
-    # -------------------------------
+    # evaluation()
+    #
     # eval_label=np.load("./result/eval_label.npy")
     # eval_data=np.load("./result/eval_data.npy")
     # plotdistribution2(eval_label,eval_data)
     # plt.show()
-    # -----------------------------
-    # from line_profiler import LineProfiler
-    # lp = LineProfiler()
-    # lp_wrapper = lp(run)
-    # lp_wrapper()
-    # lp.print_stats()
-    # -----------------------------
 
-    # run()
+    run()
