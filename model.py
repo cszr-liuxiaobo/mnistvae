@@ -19,7 +19,7 @@ class VAE(nn.Module):
 
     # 将高斯分布均值与方差参数重表示，生成隐变量z  若x~N(mu, var*var)分布,则(x-mu)/var=z~N(0, 1)分布
     def reparameterize(self, mu, log_var):
-        std = torch.exp(log_var / 2) #log_var是用来计算方差的
+        std = torch.exp(log_var / 2)
         eps = torch.randn_like(std)
         return mu + eps * std
 
